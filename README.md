@@ -282,8 +282,7 @@ Contoh nama file : makan_sehat1.txt, makan_sehat2.txt, dst
 Penyelesaian :
 - Ambil data dari file makan_enak.txt
 - Ambil waktu sekarang dan waktu akses terakhir dari file makan_enak.txt
-- Lalu, jika file makan_enak.txt pernah diakses dalam selang 30 detik, maka akan dibuat file makan_sehat#.txt
-- # berisikan angka 1 sampai tak hingga didapatkan dari perulangan
+- Lalu, jika file makan_enak.txt pernah diakses dalam selang 30 detik, maka akan dibuat file makan_sehat#.txt yang dimana # berisikan angka 1 sampai tak hingga
 
 ```bash
 #include <sys/types.h>
