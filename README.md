@@ -101,10 +101,158 @@ Nomor 1
 Elen mempunyai pekerjaan pada studio sebagai fotografer. Suatu hari ada seorang klien yang bernama Kusuma yang meminta untuk mengubah nama file yang memiliki ekstensi .png menjadi “[namafile]_grey.png”. Karena jumlah file yang diberikan Kusuma tidak manusiawi, maka Elen meminta bantuan kalian untuk membuat suatu program C yang dapat mengubah nama secara otomatis dan diletakkan pada direktori /home/[user]/modul2/gambar.
 Catatan : Tidak boleh menggunakan crontab.
 
+Penyelesaian : 
+- Pertama masuk ke dalam folder /home/justfachry/modul2
+- Setelah itu baca nama file yang ada di dalam folder tersebut
+- Jika ekstensi file tersebut adalah .png, maka ambil nama file tersebut
+- Gabungkan nama file tersebut dengan "_grey.png" menggunakan ```strcat```
+- Lalu rename nama file dengan nama file baru yang ditambahkan "_grey.png"
+
+```bash
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+
+int main() {
+  pid_t pid, sid;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/home/justfachry/modul2")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1) {
+    // main program here
+#include <dirent.h> 
+#include <stdio.h> 
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(".");
+  if (d) {
+    while ((dir = readdir(d)) != NULL) {
+    //   printf("%s\n", dir->d_name);
+        int pfile = strlen(dir->d_name)-5;
+        if(strstr(&dir->d_name[pfile], ".png")){
+         int pnama = strlen(dir->d_name)-4;
+         char nama[100]="";
+		    strncpy(nama, dir->d_name, pnama);
+		    strcat(nama, "_grey.png");
+		    rename(strcat(".", dir->d_name), strcat("/gambar", nama));
+          
+        }
+    }
+    closedir(d);
+}
+    sleep(1);
+  }
+  
+  exit(EXIT_SUCCESS);
+}
+```
 Nomor 2
 
 Pada suatu hari Kusuma dicampakkan oleh Elen karena Elen dimenangkan oleh orang lain. Semua kenangan tentang Elen berada pada file bernama “elen.ku” pada direktori “hatiku”. Karena sedih berkepanjangan, tugas kalian sebagai teman Kusuma adalah membantunya untuk menghapus semua kenangan tentang Elen dengan membuat program C yang bisa mendeteksi owner dan group dan menghapus file “elen.ku” setiap 3 detik dengan syarat ketika owner dan grupnya menjadi “www-data”. Ternyata kamu memiliki kendala karena permission pada file “elen.ku”. Jadi, ubahlah permissionnya menjadi 777. Setelah kenangan tentang Elen terhapus, maka Kusuma bisa move on.
 Catatan: Tidak boleh menggunakan crontab
+
+Penyelesaian : 
+- Pertama buat struct untuk menyimpan data dari file elen.ku
+- Lalu atur agar siapapun dapat mengakses file tersebut dengan mengubah mode file tersebut menggunakan ```chmod```
+- Setelah itu ambil data grup dan owner dari elen.ku
+- Lalu jika owner dan grupnya adalah www-data, maka "elen.ku" akan dihapus
+
+ ```bash
+ #include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <grp.h>
+#include <pwd.h>
+int main() {
+  pid_t pid, sid;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1) {
+    // main program here
+    struct stat file;
+    struct group *group;
+    struct passwd *owner;
+    char* dir = "/home/justfachry/modul2.hatiku/elen.ku";
+    stat(dir, &file);
+
+    char mode[4]="0777";
+    int i;
+    i = strtol(mode,0,8);
+    chmod(dir, i);
+
+    group = getgrgid(file.st_uid);
+    owner = getpwuid(file.st_gid);
+
+    if (strcmp(owner->pw_name, "www-data") == 0 && strcmp(group->gr_name, "www-data") == 0) 
+        remove(dir);
+
+    sleep(3);
+  }
+  
+  exit(EXIT_SUCCESS);
+}
+ ```
 
 Nomor 3
 
@@ -130,6 +278,77 @@ Pada detik ke-10 terdapat file makan_sehat1.txt dan makan_sehat2.txt
 Catatan: 
 dilarang menggunakan crontab
 Contoh nama file : makan_sehat1.txt, makan_sehat2.txt, dst
+
+Penyelesaian :
+- Ambil data dari file makan_enak.txt
+- Ambil waktu sekarang dan waktu akses terakhir dari file makan_enak.txt
+- Lalu, jika file makan_enak.txt pernah diakses dalam selang 30 detik, maka akan dibuat file makan_sehat#.txt
+- # berisikan angka 1 sampai tak hingga didapatkan dari perulangan
+
+```bash
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <time.h>
+int main() {
+  pid_t pid, sid;
+    int i;
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  while(1) {
+    // main program here
+    struct stat lala;
+    char* dir = "/home/justfachry/Dokumen/makanan/makan_enak.txt";
+    stat(dir, &lala);
+
+    time_t now = time(NULL);
+    time_t op = lala.st_atime;
+
+    if(difftime(now, op)<=30){
+        char  iter [10];
+        sprintf(iter, "%d", i);
+
+        char *file = "/home/justfachry/Dokumen/makanan/makan_sehat";
+        strcat(file, iter);
+        strcat(file, "txt");
+        i++;
+    }
+    sleep(5);
+  }
+  
+  exit(EXIT_SUCCESS);
+}
+```
 
 nomor 5
 
