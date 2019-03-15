@@ -8,9 +8,9 @@ Latihan 1
 Modifikasi code soal1 agar output nya menjadi huruf abjad urut dari A sampai Z, tanpa menghapus fungsi yang sudah ada.
 
 Penyelesaian :
-- Dari code soal1 kami mendapatkan input N - Z dan A - M, sehingga tidak terurut. Dalam hal ini, jika kami membalikkan ```bash printf ``` dari abjad_shift_1 dan abjad_shift_2, maka akan langsung urut
-- Namun kami diminta untuk membuat perintah ```bash wait```
-- Maka kami deklarasikan sebuah variabel status dan dalam pemrograman kami membuat perintah ```bash while((wait(&status)) > 0);``` sebelum memanggil perintah abjad_shift_2
+- Dari code soal1 kami mendapatkan input N - Z dan A - M, sehingga tidak terurut. Dalam hal ini, jika kami membalikkan ```printf ``` dari abjad_shift_1 dan abjad_shift_2, maka akan langsung urut
+- Namun kami diminta untuk membuat perintah ```wait```
+- Maka kami deklarasikan sebuah variabel status dan dalam pemrograman kami membuat perintah ```while((wait(&status)) > 0);``` sebelum memanggil perintah abjad_shift_2
 - Maka hasil dari program tersebut akan melakukan output urut dari A sampai Z
 
 ```bash
@@ -60,10 +60,10 @@ Hint: gunakan fork, exec, dan wait.
 
 Penyelesaian :
 - Pertama deklarasikan parent
-- Setelah itu fork menggunakan fungsi ```bash fork()```
-- Dalam child, buat perintah ```bash mkdir``` untuk membuat folder anak
+- Setelah itu fork menggunakan fungsi ```fork()```
+- Dalam child, buat perintah ```mkdir``` untuk membuat folder anak
 - Lalu, dalam parent, buat status wait, agar perintah child yang dijalankan duluan
-- Dalam parent, copy file warisan.txt menggunakan perintah ```bash cp``` ke dalam folder anak
+- Dalam parent, copy file warisan.txt menggunakan perintah ```cp``` ke dalam folder anak
 
 ```bash
 #include <stdio.h>
