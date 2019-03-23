@@ -94,6 +94,77 @@ Latihan 3
 
 Buatlah sebuah daemon yang dapat melakukan backup isi dari file sampah.txt yang disimpan dalam file log.log lalu menghapus file sampah.txt tersebut. Tidak diperbolehkan menggunakan exec dan system.
 
+Penyelesaian :
+- Pertama buka file sampah.txt dan log.log menggunakan ```fopen```
+- Lalu copy data dari sampah.txt ke dalam log.log
+- Hapus file sampah.txt
+- Tutup file log.log
+
+```bash
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+int running = 1;
+
+int main(void)
+{
+	int pid, sid;
+	FILE* log;
+	FILE* fp;
+	char str[100];
+	int done = 0;
+
+	pid = fork();
+	if(pid < 0) {
+		perror("fork");
+		exit(1);
+	}
+	if(pid > 0) exit(0);
+
+	umask(0);
+
+	fp = fopen("/home/cheese/sampah.txt","r");
+	log = fopen("/home/cheese/log.log","w+");
+
+	sid = setsid();
+	if(sid < 0) {
+		perror("setsid");
+		exit(3);
+	}
+
+	if((chdir("/")) < 0) {
+		perror("chdir");
+		exit(4);
+	}
+
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+
+	while(running)
+	{
+
+		while(fgets (str, 100, fp) != NULL) 
+		{
+			fprintf(log, "%s", str);
+		}
+		fclose(log);
+		sleep(10);
+		remove("/home/cheese/sampah.txt");		
+		running = 0;
+	}
+	
+	return EXIT_SUCCESS;
+
+}
+
+```
+
 Soal Shift
 
 Nomor 1
@@ -102,7 +173,7 @@ Elen mempunyai pekerjaan pada studio sebagai fotografer. Suatu hari ada seorang 
 Catatan : Tidak boleh menggunakan crontab.
 
 Penyelesaian : 
-- Pertama masuk ke dalam folder /home/justfachry/modul2
+- Pertama masuk ke dalam folder /home/justfachry/modul2/nomor1
 - Setelah itu baca nama file yang ada di dalam folder tersebut
 - Jika ekstensi file tersebut adalah .png, maka ambil nama file tersebut
 - Gabungkan nama file tersebut dengan "_grey.png" menggunakan ```strcat```
@@ -118,6 +189,7 @@ Penyelesaian :
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
+#include <dirent.h>
 
 int main() {
   pid_t pid, sid;
@@ -140,7 +212,7 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  if ((chdir("/home/justfachry/modul2")) < 0) {
+  if ((chdir("/home/justfachry/modul2/nomor1")) < 0) {
     exit(EXIT_FAILURE);
   }
 
@@ -150,27 +222,31 @@ int main() {
 
   while(1) {
     // main program here
-#include <dirent.h> 
-#include <stdio.h> 
   DIR *d;
   struct dirent *dir;
   d = opendir(".");
   if (d) {
     while ((dir = readdir(d)) != NULL) {
-    //   printf("%s\n", dir->d_name);
-        int pfile = strlen(dir->d_name)-5;
-        if(strstr(&dir->d_name[pfile], ".png")){
-         int pnama = strlen(dir->d_name)-4;
-         char nama[100]="";
-		    strncpy(nama, dir->d_name, pnama);
-		    strcat(nama, "_grey.png");
-		    rename(strcat(".", dir->d_name), strcat("/gambar", nama));
-          
+  
+         int ext = strlen(dir->d_name)-4;
+         if(strstr(&dir->d_name[ext], ".png")){
+           char nama[200];
+           memset(nama, 0, sizeof(nama));
+           strncpy(nama, dir->d_name, ext);
+           strcat(nama, "_grey.png");
+           char loc[200];
+           memset(loc, 0, sizeof(loc));
+           strcpy(loc, "/home/justfachry/modul2/gambar/");
+           strcat(loc, nama);
+           char file[200];
+           memset(file, 0, sizeof(file));
+           strcpy(file, dir->d_name);
+           rename(file, loc);
         }
     }
     closedir(d);
 }
-    sleep(1);
+    sleep(10);
   }
   
   exit(EXIT_SUCCESS);
@@ -188,7 +264,7 @@ Penyelesaian :
 - Lalu jika owner dan grupnya adalah www-data, maka "elen.ku" akan dihapus
 
  ```bash
- #include <sys/types.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -233,19 +309,16 @@ int main() {
     struct stat file;
     struct group *group;
     struct passwd *owner;
-    char* dir = "/home/justfachry/modul2.hatiku/elen.ku";
+    char dir[] = "/home/justfachry/modul2/hatiku/elen.ku";
     stat(dir, &file);
 
-    char mode[4]="0777";
-    int i;
-    i = strtol(mode,0,8);
-    chmod(dir, i);
 
-    group = getgrgid(file.st_uid);
-    owner = getpwuid(file.st_gid);
+    group = getgrgid(file.st_gid);
+    owner = getpwuid(file.st_uid);
 
+    chmod(dir, 0777);
     if (strcmp(owner->pw_name, "www-data") == 0 && strcmp(group->gr_name, "www-data") == 0) 
-        remove(dir);
+       remove(dir);
 
     sleep(3);
   }
@@ -266,6 +339,65 @@ Gunakan minimal 3 proses yang diakhiri dengan exec.
 Gunakan pipe
 Pastikan file daftar.txt dapat diakses dari text editor
 
+Penyelesaian :
+- Pertama unzip file campur2.zip menggunakan exec
+- Buat exec untuk membuat daftar.txt menggunakan perintah ```touch```
+- Lalu buka file daftar.txt
+- Masukkan data campur2.txt ke dalam file daftar.txt
+
+```bash
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
+const int PATH_MAX = 2048;
+
+int main() {
+
+
+	FILE *source;
+	FILE *destination;
+	char path[PATH_MAX];
+	int status;
+	
+	pid_t child_pid = fork();
+
+
+	if(child_pid == 0)
+	{
+		execl("/usr/bin/unzip", "unzip", "campur2.zip", NULL);
+	}
+
+	child_pid = fork();
+
+	if(child_pid == 0)
+	{
+		execl("/usr/bin/touch", "touch", "daftar.txt", NULL);
+	}
+
+	while ((wait(&status)) > 0);
+
+	FILE *daftar = fopen("daftar.txt", "w");
+	int ret = chdir("campur2");
+	
+	if(ret != 0) {
+		perror("Error");
+	}
+	
+	source = popen("ls *txt", "r");
+	while (fgets(path, PATH_MAX, source) != NULL)
+	{
+		fprintf(daftar,"%s", path);
+	}
+	fclose(daftar); 
+
+return 0;
+}
+
+```
+
 nomor 4
 
 Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan seringkali tergiur untuk membaca isi makan_enak.txt karena ngidam makanan enak. Sebagai teman yang baik, Anda membantu Elen dengan membuat program C yang berjalan setiap 5 detik untuk memeriksa apakah file makan_enak.txt pernah dibuka setidaknya 30 detik yang lalu (rentang 0 - 30 detik).
@@ -280,7 +412,7 @@ dilarang menggunakan crontab
 Contoh nama file : makan_sehat1.txt, makan_sehat2.txt, dst
 
 Penyelesaian :
-- Ambil data dari file makan_enak.txt
+- Pertama buat struct stat untuk mengambil data dari file makan_enak.txt
 - Ambil waktu sekarang dan waktu akses terakhir dari file makan_enak.txt
 - Lalu, jika file makan_enak.txt pernah diakses dalam selang 30 detik, maka akan dibuat file makan_sehat#.txt yang dimana # berisikan angka 1 sampai tak hingga
 
@@ -360,3 +492,125 @@ Per menit memasukkan log#.log ke dalam folder tersebut
 Buatlah program c untuk menghentikan program di atas.
 NB: Dilarang menggunakan crontab dan tidak memakai argumen ketika menjalankan program.
 
+Penyelesaian : 
+- Pertama ambil waktu sekarang menggubakan perintah localtime
+- Lalu atur format time menjadi dd:MM:yyyy-hh:mm menggunakan fungsi ```strftime```
+- Lalu per 30 menit, buat folder yang namanya sesuai dengan nama waktu saat itu
+- Lalu gabungkan nama folder yang telah dibuat dengan directory foldernya
+- lalu setiap 1 menit, buat sebuah file yang berisikan isi dari /var/log/syslog
+
+```bash
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <dirent.h>
+#include <time.h>
+
+int main() {
+  pid_t pid, sid, child;
+
+  pid = fork();
+
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+  sid = setsid();
+
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/home/justfachry/modul2/log/")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  FILE * gpid;
+  gpid = fopen ("/home/justfachry/modul2/log/pid.txt", "w+");
+  fprintf(gpid, "%d",getpid());
+  fclose(gpid);
+
+  while(1)
+  {
+	static int i=0;
+	time_t t;
+	struct tm *tmp;
+	time(&t);
+	tmp = localtime(&t);
+	char my_time[100], namaFile[100];
+	char namaFolder[100];
+	char path[100];
+	strftime(my_time, sizeof(my_time), "%d:%m:%Y-%H:%M", tmp);
+
+	if(i%30 == 0)
+	{
+		strcpy(namaFolder,my_time);
+		strcpy(path,"/home/justfachry/modul2/log/");
+		strcat(path,namaFolder);
+		strcat(path, "/");
+		mkdir(path, 0777);
+	}
+
+	int logno = i+1;
+	char newLog[100];
+	sprintf(newLog, "log%d", logno);
+	strcat(newLog,".log");
+	strcpy(namaFile, path);
+	strcat(namaFile, newLog);
+	
+	FILE *slog, *nlog;
+	int c;
+	slog=fopen("/var/log/syslog", "r");
+	nlog=fopen(namaFile, "w");
+	while(1){
+            c=fgetc(slog);
+            if(feof(slog)){
+                break;
+            }
+            fputc(c, nlog);
+        }
+        fclose(slog);
+	fclose(nlog);
+ 	sleep(60);
+
+	i++;
+  }
+  exit(EXIT_SUCCESS);
+}
+
+```
+
+- Lalu buat file untuk menghentikan file soal5a
+
+```bash
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <error.h>
+#include <signal.h>
+#include <unistd.h>
+#include <syslog.h>
+
+int main(){
+	char *argv[] = {"pkill", "-9", "soal5a", NULL};
+	execv("/usr/bin/pkill", argv);
+}
+
+```
