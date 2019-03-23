@@ -596,7 +596,7 @@ int main() {
 
 ```
 
-- Lalu buat file untuk menghentikan file soal5a
+- Lalu buat program untuk menghentikan file soal5a
 
 ```bash
 #include <stdio.h>
